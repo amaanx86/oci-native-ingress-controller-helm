@@ -1,0 +1,12 @@
+apiVersion: v2
+name: oci-native-ingress-controller
+description: OCI Native Ingress Controller
+type: application
+version: 1.4.2
+appVersion: "1.4.2"
+
+maintainers:
+  - name: Amaan Ul Haq Siddiqui
+keywords:
+  - oci
+  - native-ingress-controller
