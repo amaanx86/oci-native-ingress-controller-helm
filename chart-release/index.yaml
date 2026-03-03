@@ -1,0 +1,26 @@
+apiVersion: v1
+entries:
+  oci-native-ingress-controller:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-03-03T21:08:16.609975719Z"
+    description: OCI Native Ingress Controller with Cloud Guard compliance
+    digest: 361b049421c797b75677e39fd22dc62c10449ec4757c546cb44c0c774638c35e
+    home: https://github.com/amaanx86/oci-native-ingress-controller-helm
+    keywords:
+    - oci
+    - native-ingress-controller
+    - kubernetes
+    - ingress
+    - oracle-cloud
+    maintainers:
+    - email: amaanulhaq.s@outlook.com
+      name: Amaan Ul Haq Siddiqui
+    name: oci-native-ingress-controller
+    sources:
+    - https://github.com/amaanx86/oci-native-ingress-controller-helm
+    type: application
+    urls:
+    - https://raw.githubusercontent.com/amaanx86/oci-native-ingress-controller-helm/main/chart-release/oci-native-ingress-controller-1.0.0.tgz
+    version: 1.0.0
+generated: "2026-03-03T21:08:16.609166772Z"
