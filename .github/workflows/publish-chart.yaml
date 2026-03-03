@@ -13,7 +13,6 @@ on:
 permissions:
   contents: write
   packages: write
-  pages: write
 
 jobs:
   release:
@@ -62,9 +61,3 @@ jobs:
         run: |
           helm package . --destination /tmp/
           helm push /tmp/oci-native-ingress-controller-${{ steps.chart.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./gh-pages
