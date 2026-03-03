@@ -40,9 +40,9 @@ jobs:
 
       - name: Generate Helm repository index
         run: |
-          helm repo index chart-release --url https://raw.githubusercontent.com/${{ github.repository }}/main/chart-release
+          helm repo index chart-release --url https://github.com/${{ github.repository }}/releases/download/v${{ steps.chart.outputs.version }}
 
-      - name: Commit and push index.yaml
+      - name: Commit and push Helm repository index
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
