@@ -1,31 +1,56 @@
-name: Validate and Publish Helm Chart to GHCR
+name: Release and Publish Helm Chart
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
+    paths:
+      - 'Chart.yaml'
+      - 'values.yaml'
+      - 'templates/**'
+      - '.github/workflows/publish-chart.yaml'
+
+permissions:
+  contents: write
+  packages: write
+  pages: write
 
 jobs:
-  validate-and-publish:
+  release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
-        with:
-          version: latest
 
       - name: Validate Helm chart
         run: |
           helm lint .
           helm template oci-native-ingress-controller . > /dev/null
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1
+        with:
+          skip_existing: true
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          CR_GENERATE_RELEASE_NOTES: true
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract chart version
         id: chart
@@ -33,33 +58,13 @@ jobs:
           VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Package Helm chart
+      - name: Push chart to GHCR (OCI)
         run: |
-          mkdir -p chart-release
-          helm package . --destination chart-release/
+          helm package . --destination /tmp/
+          helm push /tmp/oci-native-ingress-controller-${{ steps.chart.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}
 
-      - name: Generate Helm repository index
-        run: |
-          helm repo index chart-release --url https://github.com/${{ github.repository }}/releases/download/v${{ steps.chart.outputs.version }}
-
-      - name: Commit and push Helm repository index
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add chart-release/index.yaml
-          git commit -m "chore: update Helm repository index for v${{ steps.chart.outputs.version }}" || echo "No changes to commit"
-          git push origin HEAD:main
-
-      - name: Login to GitHub Container Registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Push chart to GHCR
-        run: |
-          helm push chart-release/oci-native-ingress-controller-${{ steps.chart.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}
-
-      - name: Upload chart to release assets
-        uses: softprops/action-gh-release@v2
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          files: chart-release/*.tgz
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
