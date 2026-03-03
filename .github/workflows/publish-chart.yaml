@@ -8,7 +8,7 @@ jobs:
   validate-and-publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -50,5 +50,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: chart-release/*.tgz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
