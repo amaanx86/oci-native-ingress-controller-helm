@@ -24,11 +24,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
       - name: Set up Helm
         uses: azure/setup-helm@v4
 
@@ -37,14 +32,26 @@ jobs:
           helm lint .
           helm template oci-native-ingress-controller . > /dev/null
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1
+      - name: Extract chart version
+        id: chart
+        run: |
+          VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Package Helm chart
+        run: |
+          mkdir -p gh-pages
+          helm package . --destination gh-pages/
+
+      - name: Generate Helm repository index
+        run: |
+          helm repo index gh-pages --url https://github.com/${{ github.repository }}/releases/download/v${{ steps.chart.outputs.version }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          skip_existing: true
-          charts_dir: .
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          CR_GENERATE_RELEASE_NOTES: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -53,19 +60,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract chart version
-        id: chart
-        run: |
-          VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
       - name: Push chart to GHCR (OCI)
         run: |
-          helm package . --destination /tmp/
-          helm push /tmp/oci-native-ingress-controller-${{ steps.chart.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}
+          helm push gh-pages/oci-native-ingress-controller-${{ steps.chart.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .cr-release-packages
+      - name: Create Release
+        run: |
+          gh release create v${{ steps.chart.outputs.version }} \
+            gh-pages/oci-native-ingress-controller-${{ steps.chart.outputs.version }}.tgz \
+            --title "Release v${{ steps.chart.outputs.version }}" \
+            --generate-notes \
+            --draft=false \
+            2>/dev/null || echo "Release already exists"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
