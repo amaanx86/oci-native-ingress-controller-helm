@@ -4,9 +4,15 @@ description: OCI Native Ingress Controller with Cloud Guard compliance
 type: application
 version: 1.0.0
 appVersion: "1.0.0"
-
+home: https://github.com/amaanx86/oci-native-ingress-controller-helm
+sources:
+  - https://github.com/amaanx86/oci-native-ingress-controller-helm
 maintainers:
   - name: Amaan Ul Haq Siddiqui
+    email: amaanulhaq.s@outlook.com
 keywords:
   - oci
   - native-ingress-controller
+  - kubernetes
+  - ingress
+  - oracle-cloud
