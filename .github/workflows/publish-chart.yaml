@@ -1,0 +1,45 @@
+name: Validate and Package Helm Chart on Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  validate-and-package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: latest
+
+      - name: Validate Helm chart
+        run: |
+          helm lint .
+          helm template oci-native-ingress-controller . > /dev/null
+
+      - name: Extract chart version
+        id: chart
+        run: |
+          VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Package Helm chart
+        run: |
+          mkdir -p chart-release
+          helm package . --destination chart-release/
+
+      - name: Upload chart to release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: chart-release/*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

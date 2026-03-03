@@ -1,5 +1,8 @@
 # OCI Native Ingress Controller Helm Chart
 
+[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/oci-native-ingress-controller)](https://artifacthub.io/packages/search?repo=oci-native-ingress-controller)
+[![Validate and Package Helm Chart](https://github.com/amaanx86/oci-native-ingress-controller-helm/actions/workflows/publish-chart.yaml/badge.svg)](https://github.com/amaanx86/oci-native-ingress-controller-helm/actions/workflows/publish-chart.yaml)
+
 A Kubernetes Ingress controller for Oracle Cloud Infrastructure (OCI) that enables native OCI Load Balancer integration with your Kubernetes clusters, particularly for OKE (Oracle Kubernetes Engine).
 
 ## Overview
@@ -39,11 +42,21 @@ helm install cert-manager jetstack/cert-manager \
 ### 1. Add the Helm Repository
 
 ```bash
-helm repo add oci-native-ingress-controller https://github.com/amaanx86/oci-native-ingress-controller-helm
+helm repo add oci-native-ingress-controller https://raw.githubusercontent.com/amaanx86/oci-native-ingress-controller-helm/main/
 helm repo update
 ```
 
-### 2. Create Required OCI Configuration
+### 2. Get Default Values
+
+Pull the default values from the chart and customize for your environment:
+
+```bash
+helm show values oci-native-ingress-controller/oci-native-ingress-controller > values.yaml
+```
+
+Then edit `values.yaml` with your OCI configuration (see example below).
+
+### 3. Create Required OCI Configuration
 
 Create a secret with your OCI credentials (if not using instance principal):
 
@@ -57,7 +70,7 @@ kubectl create secret generic oci-config \
   -n native-ingress-controller-system
 ```
 
-### 3. Install the Chart
+### 4. Install the Chart
 
 ```bash
 helm install oci-native-ingress-controller \
@@ -66,9 +79,9 @@ helm install oci-native-ingress-controller \
   --values values.yaml
 ```
 
-### Example values.yaml
+### Example values.yaml Configuration
 
-Create a `values.yaml` with your OCI configuration:
+Here's what to set in your customized `values.yaml`:
 
 ```yaml
 # OCI Configuration
