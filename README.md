@@ -39,43 +39,61 @@ helm install cert-manager jetstack/cert-manager \
 
 ## Installation
 
-### 1. Add the Helm Repository
+### Quick Start
+
+#### Method 1: Helm Repository
 
 ```bash
-helm repo add oci-native-ingress-controller https://raw.githubusercontent.com/amaanx86/oci-native-ingress-controller-helm/main/
+# Add repository
+helm repo add oke-ingress https://amaanx86.github.io/oci-native-ingress-controller-helm/
 helm repo update
+
+# Search for the chart
+helm search repo oke-ingress
+
+# Install
+helm install oke-ingress oke-ingress/oci-native-ingress-controller \
+  --namespace native-ingress-controller-system \
+  --create-namespace
 ```
 
-### 2. Get Default Values
-
-Pull the default values from the chart and customize for your environment:
+#### Method 2: OCI Registry
 
 ```bash
-helm show values oci-native-ingress-controller/oci-native-ingress-controller > values.yaml
+# Pull default values
+helm pull oci://ghcr.io/amaanx86/oci-native-ingress-controller --untar
+
+# Install directly
+helm install oke-ingress oci://ghcr.io/amaanx86/oci-native-ingress-controller \
+  --namespace native-ingress-controller-system \
+  --create-namespace
 ```
 
-Then edit `values.yaml` with your OCI configuration (see example below).
+### Detailed Installation Steps
 
-### 3. Create Required OCI Configuration
-
-Create a secret with your OCI credentials (if not using instance principal):
+#### 1. Get Default Values
 
 ```bash
-kubectl create namespace native-ingress-controller-system
+helm show values oke-ingress/oci-native-ingress-controller > values.yaml
+```
 
-# If using user credentials:
+Edit `values.yaml` with your OCI configuration (see example below).
+
+#### 2. Create OCI Credentials Secret (if not using instance principal)
+
+```bash
 kubectl create secret generic oci-config \
   --from-file=/path/to/.oci/config \
   --from-file=/path/to/.oci/ocikey.pem \
   -n native-ingress-controller-system
 ```
 
-### 4. Install the Chart
+#### 3. Install the Chart
 
 ```bash
-helm install oci-native-ingress-controller \
-  oci-native-ingress-controller/oci-native-ingress-controller \
+helm install oke-ingress oke-ingress/oci-native-ingress-controller \
   --namespace native-ingress-controller-system \
+  --create-namespace \
   --values values.yaml
 ```
 
